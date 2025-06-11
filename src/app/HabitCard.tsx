@@ -86,7 +86,7 @@ const HabitCard: React.FC<HabitCardProps> = ({
         </div>
         <span className="text-sm text-light-text ml-4 whitespace-nowrap dark:text-dark-text">
           {completed}/7 days
-          <span className="ml-2 text-base font-semibold bg-yellow-50 text-purple-600 px-2 py-0.5 rounded border border-yellow-100">
+          <span className="ml-2 text-xs bg-yellow-50 text-purple-600 px-2 py-0.5 rounded border border-yellow-100">
             Streak: {habit.streak} week
             {habit.streak === 1 ? "" : "s"}
           </span>
@@ -149,7 +149,7 @@ const HabitCard: React.FC<HabitCardProps> = ({
                 type="checkbox"
                 checked={habit.daysChecked[j]}
                 onChange={() => toggleDay(i, j)}
-                className={`w-5 h-5 mb-1 rounded border-2 border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-150 bg-white dark:bg-dark-background dark:border-blue-700 checked:bg-blue-500 checked:border-blue-500 checked:dark:bg-blue-600 checked:dark:border-blue-600 hover:border-blue-600 hover:ring-blue-400 ${
+                className={`w-5 h-5 mb-1 rounded border-2 border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-150 bg-white dark:bg-dark-background dark:border-blue-700 checked:bg-blue-500 checked:border-blue-500 checked:dark:bg-blue-600 checked:dark:border-blue-600 hover:border-blue-600 hover:ring-blue-400 cursor-pointer ${
                   isToday ? "ring-2 ring-blue-400 ring-offset-2" : ""
                 }`}
               />
