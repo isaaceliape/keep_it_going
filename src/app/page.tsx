@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import HabitCard from "./HabitCard";
 
@@ -21,6 +21,8 @@ export default function Home() {
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
   const [deletingIdx, setDeletingIdx] = useState<number | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Fetch habits from API
   useEffect(() => {
@@ -101,6 +103,21 @@ export default function Home() {
     setEditValue("");
   };
 
+  // Close menu on outside click
+  useEffect(() => {
+    function handleClick(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClick);
+    } else {
+      document.removeEventListener("mousedown", handleClick);
+    }
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen]);
+
   // Helper to get the start and end of the current week
   function getCurrentWeekRange() {
     const today = new Date();
@@ -132,6 +149,84 @@ export default function Home() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen bg-gradient-light dark:bg-gradient-dark p-4">
+      {/* Hamburger menu */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          aria-label="Open menu"
+          className="p-2 rounded-full bg-white shadow hover:bg-gray-100 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <svg
+            width="28"
+            height="28"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="black"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+        {menuOpen && (
+          <div
+            ref={menuRef}
+            className="absolute right-0 mt-2 w-64 bg-white rounded shadow-lg border border-gray-200 p-4 flex flex-col gap-4 z-50"
+          >
+            <button
+              onClick={() => {
+                const link = document.createElement("a");
+                link.href = "/api/habits/export";
+                link.download = "habits.sqlite";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setMenuOpen(false);
+              }}
+              className="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors shadow border-0 focus:ring-2 focus:ring-green-400 cursor-pointer"
+            >
+              Export data
+            </button>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const input = document.getElementById(
+                  "import-sqlite"
+                ) as HTMLInputElement;
+                if (!input.files || input.files.length === 0) return;
+                const formData = new FormData();
+                formData.append("file", input.files[0]);
+                await fetch("/api/habits/import", {
+                  method: "POST",
+                  body: formData,
+                });
+                setMenuOpen(false);
+                window.location.reload();
+              }}
+              className="flex flex-row items-center gap-2"
+            >
+              <input
+                id="import-sqlite"
+                type="file"
+                accept=".sqlite"
+                className="block text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                required
+                title="Select a .sqlite file to import"
+                placeholder="Select a .sqlite file"
+              />
+              <button
+                type="submit"
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors shadow border-0 focus:ring-2 focus:ring-blue-400 cursor-pointer"
+              >
+                Import data
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
       {/* Replace the h1 with the logo image using Next.js Image for optimization */}
       <div className="mb-6 drop-shadow-lg logo-container">
         <Image
@@ -196,55 +291,6 @@ export default function Home() {
           Add
         </button>
       </form>
-      {/* Export/Import DB Buttons */}
-      <div className="mb-6 w-full max-w-xl flex flex-col sm:flex-row justify-end gap-2">
-        <button
-          onClick={() => {
-            const link = document.createElement("a");
-            link.href = "/api/habits/export";
-            link.download = "habits.sqlite";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          }}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors shadow border-0 focus:ring-2 focus:ring-green-400 cursor-pointer"
-        >
-          Export data
-        </button>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const input = document.getElementById(
-              "import-sqlite"
-            ) as HTMLInputElement;
-            if (!input.files || input.files.length === 0) return;
-            const formData = new FormData();
-            formData.append("file", input.files[0]);
-            await fetch("/api/habits/import", {
-              method: "POST",
-              body: formData,
-            });
-            window.location.reload(); // reload to refresh habits
-          }}
-          className="flex flex-row items-center gap-2"
-        >
-          <input
-            id="import-sqlite"
-            type="file"
-            accept=".sqlite"
-            className="block text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            required
-            title="Select a .sqlite file to import"
-            placeholder="Select a .sqlite file"
-          />
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors shadow border-0 focus:ring-2 focus:ring-blue-400 cursor-pointer"
-          >
-            Import data
-          </button>
-        </form>
-      </div>
       <div className="w-full max-w-xl space-y-6">
         {loading ? (
           <div className="text-light-text text-center dark:text-dark-text">

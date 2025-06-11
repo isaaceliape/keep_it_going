@@ -156,3 +156,23 @@ body.dark {
   width: 100%;
   height: 100%;
 }
+
+.dark-mode-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  border: 2px solid #232526;
+  transition: background 0.3s, border 0.3s;
+}
+.dark-mode-circle.light {
+  background: var(--gradient-light);
+  border: 2px solid #fff;
+}
+.dark-mode-circle.dark {
+  background: var(--gradient-dark);
+  border: 2px solid #232526;
+}
