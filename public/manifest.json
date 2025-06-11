@@ -1,0 +1,27 @@
+{
+  "name": "Keep It Going",
+  "short_name": "Keep It Going",
+  "description": "A habit tracking Progressive Web App",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "categories": ["productivity", "lifestyle"],
+  "icons": [
+    {
+      "src": "/keep_it_going_logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/keep_it_going_logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

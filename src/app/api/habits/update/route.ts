@@ -16,15 +16,15 @@ export async function PUT(req: Request) {
       id
     );
   }
-  // Check if all days are checked for the week
+  // Check the days and manage streak
   if (Array.isArray(daysChecked) && daysChecked.length === 7) {
-    const allChecked = daysChecked.every(Boolean);
-    if (allChecked) {
-      // Increment streak
-      db.prepare("UPDATE habits SET streak = streak + 1 WHERE id = ?").run(id);
-    } else {
-      // Reset streak to 0 if not all checked
+    // Reset streak if any day is unchecked (meaning they missed a day)
+    if (daysChecked.includes(false)) {
+      // Reset streak to 0 if any day is missed
       db.prepare("UPDATE habits SET streak = 0 WHERE id = ?").run(id);
+    } else {
+      // Increment streak only if all days are checked
+      db.prepare("UPDATE habits SET streak = streak + 1 WHERE id = ?").run(id);
     }
   }
   const habit = db.prepare("SELECT * FROM habits WHERE id = ?").get(id);
