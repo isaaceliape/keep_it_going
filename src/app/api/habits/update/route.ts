@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 
 export async function PUT(req: Request) {
   const { id, daysChecked, name } = await req.json();
-  let streak = null;
   if (typeof name === "string") {
     db.prepare("UPDATE habits SET name = ?, daysChecked = ? WHERE id = ?").run(
       name,
@@ -27,9 +26,16 @@ export async function PUT(req: Request) {
       db.prepare("UPDATE habits SET streak = streak + 1 WHERE id = ?").run(id);
     }
   }
-  const habit = db.prepare("SELECT * FROM habits WHERE id = ?").get(id);
+  const habit = db.prepare("SELECT * FROM habits WHERE id = ?").get(id) as {
+    id: number;
+    name: string;
+    daysChecked: string;
+    streak: number;
+  };
   return NextResponse.json({
-    ...habit,
+    id: habit.id,
+    name: habit.name,
     daysChecked: JSON.parse(habit.daysChecked),
+    streak: habit.streak ?? 0,
   });
 }

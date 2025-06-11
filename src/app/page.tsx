@@ -68,11 +68,6 @@ export default function Home() {
     setEditValue(habits[idx].name);
   };
 
-  const cancelEdit = () => {
-    setEditingIdx(null);
-    setEditValue("");
-  };
-
   const saveEdit = async (idx: number) => {
     const habit = habits[idx];
     const res = await fetch("/api/habits/update", {
@@ -99,6 +94,11 @@ export default function Home() {
     });
     setHabits((prev) => prev.filter((_, i) => i !== idx));
     setDeletingIdx(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingIdx(null);
+    setEditValue("");
   };
 
   // Helper to get the start and end of the current week
@@ -133,22 +133,14 @@ export default function Home() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen bg-gradient-light dark:bg-gradient-dark p-4">
       {/* Replace the h1 with the logo image using Next.js Image for optimization */}
-      <div
-        className="mb-6 drop-shadow-lg"
-        style={{
-          borderRadius: "30px",
-          overflow: "hidden",
-          width: 200,
-        }}
-      >
+      <div className="mb-6 drop-shadow-lg logo-container">
         <Image
           src="/keep_it_going_logo.png"
           alt="Keep it going logo"
           width={200}
           height={150}
-          className="object-contain"
+          className="object-contain rounded-[30px]"
           priority
-          style={{ display: "block", width: "100%", height: "100%" }}
         />
       </div>
       <div className="mb-6 flex items-center justify-center">
@@ -219,6 +211,7 @@ export default function Home() {
             const percent = Math.round((completed / 7) * 100);
             return (
               <HabitCard
+                key={habit.id || i}
                 habit={habit}
                 i={i}
                 editingIdx={editingIdx}
@@ -233,6 +226,7 @@ export default function Home() {
                 setDeletingIdx={setDeletingIdx}
                 deleteHabit={deleteHabit}
                 toggleDay={toggleDay}
+                cancelEdit={cancelEdit}
               />
             );
           })

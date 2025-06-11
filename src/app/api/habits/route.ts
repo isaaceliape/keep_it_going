@@ -28,9 +28,10 @@ export async function POST(req: Request) {
   const info = stmt.run(name, daysChecked);
   const habit = db
     .prepare("SELECT * FROM habits WHERE id = ?")
-    .get(info.lastInsertRowid);
+    .get(info.lastInsertRowid) as HabitRow;
   return NextResponse.json({
-    ...habit,
+    id: habit.id,
+    name: habit.name,
     daysChecked: JSON.parse(habit.daysChecked),
     streak: habit.streak ?? 0,
   });

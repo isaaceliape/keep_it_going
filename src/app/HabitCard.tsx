@@ -21,6 +21,7 @@ interface HabitCardProps {
   setDeletingIdx: (idx: number | null) => void;
   deleteHabit: (idx: number) => void;
   toggleDay: (habitIdx: number, dayIdx: number) => void;
+  cancelEdit: () => void;
 }
 
 const HabitCard: React.FC<HabitCardProps> = ({
@@ -38,6 +39,7 @@ const HabitCard: React.FC<HabitCardProps> = ({
   setDeletingIdx,
   deleteHabit,
   toggleDay,
+  cancelEdit,
 }) => {
   return (
     <div
@@ -59,6 +61,8 @@ const HabitCard: React.FC<HabitCardProps> = ({
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 autoFocus
+                placeholder="Edit habit name"
+                title="Edit habit name"
               />
               <button
                 type="submit"
@@ -67,6 +71,14 @@ const HabitCard: React.FC<HabitCardProps> = ({
               >
                 Save
               </button>
+              <button
+                type="button"
+                className="px-3 py-1 rounded bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 hover:text-gray-900 text-xs font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer"
+                title="Cancel edit"
+                onClick={cancelEdit}
+              >
+                Cancel
+              </button>
             </form>
           ) : (
             <span className="font-semibold text-lg truncate">{habit.name}</span>
@@ -74,7 +86,7 @@ const HabitCard: React.FC<HabitCardProps> = ({
         </div>
         <span className="text-sm text-light-text ml-4 whitespace-nowrap dark:text-dark-text">
           {completed}/7 days
-          <span className="ml-2 text-xs text-purple-600 font-semibold">
+          <span className="ml-2 text-base font-semibold bg-yellow-50 text-purple-600 px-2 py-0.5 rounded border border-yellow-100">
             Streak: {habit.streak} week
             {habit.streak === 1 ? "" : "s"}
           </span>
@@ -137,7 +149,7 @@ const HabitCard: React.FC<HabitCardProps> = ({
                 type="checkbox"
                 checked={habit.daysChecked[j]}
                 onChange={() => toggleDay(i, j)}
-                className={`accent-blue-500 w-5 h-5 mb-1 ${
+                className={`w-5 h-5 mb-1 rounded border-2 border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-150 bg-white dark:bg-dark-background dark:border-blue-700 checked:bg-blue-500 checked:border-blue-500 checked:dark:bg-blue-600 checked:dark:border-blue-600 hover:border-blue-600 hover:ring-blue-400 ${
                   isToday ? "ring-2 ring-blue-400 ring-offset-2" : ""
                 }`}
               />
