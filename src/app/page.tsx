@@ -10,6 +10,7 @@ interface Habit {
   id: number;
   name: string;
   daysChecked: boolean[];
+  streak: number;
 }
 
 export default function Home() {
@@ -102,13 +103,13 @@ export default function Home() {
   // Helper to get the start and end of the current week
   function getCurrentWeekRange() {
     const today = new Date();
-    const first = today.getDate() - today.getDay(); // Sunday
-    const last = first + 6; // Saturday
-    const start = new Date(today.setDate(first));
-    const end = new Date(today.setDate(last));
+    const first = today.getDate() - today.getDay(); // First day (Sunday) of current week
+    const start = new Date(today.getFullYear(), today.getMonth(), first);
+    const end = new Date(today.getFullYear(), today.getMonth(), first + 6);
     return {
       start: start.toLocaleDateString(),
       end: end.toLocaleDateString(),
+      currentDate: today,
     };
   }
   const weekRange = getCurrentWeekRange();
@@ -136,13 +137,45 @@ export default function Home() {
         alt="Keep it going logo"
         width={120}
         height={80}
-        className="mb-2 object-contain drop-shadow-lg"
+        className="mb-6 object-contain drop-shadow-lg rounded-[30px] overflow-hidden"
         priority
       />
       <div className="mb-6 flex items-center justify-center">
         <span className="bg-blue-100 text-blue-800 font-bold text-lg px-4 py-2 rounded-full shadow border border-blue-300">
-          Week: <span className="font-extrabold">{weekRange.start}</span> -{" "}
-          <span className="font-extrabold">{weekRange.end}</span>
+          {(() => {
+            const today = weekRange.currentDate;
+            const monthNames = [
+              "January",
+              "February",
+              "March",
+              "April",
+              "May",
+              "June",
+              "July",
+              "August",
+              "September",
+              "October",
+              "November",
+              "December",
+            ];
+
+            // Get the current date's week number within the month
+            const firstDayOfMonth = new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              1
+            );
+            const pastDaysOfMonth = Math.floor(
+              (today.getTime() - firstDayOfMonth.getTime()) / 86400000
+            );
+            const weekNumber = Math.ceil(
+              (pastDaysOfMonth + firstDayOfMonth.getDay() + 1) / 7
+            );
+
+            return `Week ${weekNumber} of ${
+              monthNames[today.getMonth()]
+            } ${today.getFullYear()}`;
+          })()}
         </span>
       </div>
       <form onSubmit={addHabit} className="flex gap-2 mb-6 w-full max-w-xl">
@@ -213,6 +246,10 @@ export default function Home() {
                   </div>
                   <span className="text-sm text-gray-500 ml-4 whitespace-nowrap">
                     {completed}/7 days
+                    <span className="ml-2 text-xs text-purple-600 font-semibold">
+                      Streak: {habit.streak} week
+                      {habit.streak === 1 ? "" : "s"}
+                    </span>
                   </span>
                   {editingIdx !== i && (
                     <>
@@ -259,20 +296,27 @@ export default function Home() {
                   </div>
                 )}
                 <div className="flex gap-2 mb-2">
-                  {daysOfWeek.map((day, j) => (
-                    <label
-                      key={day}
-                      className="flex flex-col items-center text-xs"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={habit.daysChecked[j]}
-                        onChange={() => toggleDay(i, j)}
-                        className="accent-blue-500 w-5 h-5 mb-1"
-                      />
-                      {day}
-                    </label>
-                  ))}
+                  {daysOfWeek.map((day, j) => {
+                    const isToday = j === new Date().getDay();
+                    return (
+                      <label
+                        key={day}
+                        className={`flex flex-col items-center text-xs ${
+                          isToday ? "font-bold text-blue-700" : ""
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={habit.daysChecked[j]}
+                          onChange={() => toggleDay(i, j)}
+                          className={`accent-blue-500 w-5 h-5 mb-1 ${
+                            isToday ? "ring-2 ring-blue-400 ring-offset-2" : ""
+                          }`}
+                        />
+                        {day}
+                      </label>
+                    );
+                  })}
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
