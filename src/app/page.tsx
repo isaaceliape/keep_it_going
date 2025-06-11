@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import HabitCard from "./HabitCard";
 
 const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -198,7 +199,7 @@ export default function Home() {
         />
         <button
           type="submit"
-          className="bg-light-primary text-light-text px-4 py-2 rounded hover:bg-blue-600 dark:bg-dark-primary dark:text-dark-text border-0 focus:ring-2 focus:ring-blue-400"
+          className="bg-light-primary text-light-text px-4 py-2 rounded hover:bg-blue-600 dark:bg-dark-primary dark:text-dark-text border-0 focus:ring-2 focus:ring-blue-400 cursor-pointer"
         >
           Add
         </button>
@@ -217,121 +218,22 @@ export default function Home() {
             const completed = habit.daysChecked.filter(Boolean).length;
             const percent = Math.round((completed / 7) * 100);
             return (
-              <div
-                key={habit.id || i}
-                className="bg-light-background text-light-text rounded shadow p-4 dark:bg-dark-background dark:text-dark-text"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {editingIdx === i ? (
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          saveEdit(i);
-                        }}
-                        className="flex items-center gap-2 w-full"
-                      >
-                        <input
-                          className="border rounded px-2 py-1 flex-1 bg-light-background text-light-text dark:bg-dark-background dark:text-dark-text"
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          autoFocus
-                        />
-                        <button
-                          type="submit"
-                          className="px-3 py-1 rounded bg-green-100 text-green-700 border border-green-300 hover:bg-green-200 hover:text-green-900 transition-colors text-xs font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400 mr-1"
-                          title="Save changes"
-                        >
-                          Save
-                        </button>
-                      </form>
-                    ) : (
-                      <span className="font-semibold text-lg truncate">
-                        {habit.name}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-sm text-light-text ml-4 whitespace-nowrap dark:text-dark-text">
-                    {completed}/7 days
-                    <span className="ml-2 text-xs text-purple-600 font-semibold">
-                      Streak: {habit.streak} week
-                      {habit.streak === 1 ? "" : "s"}
-                    </span>
-                  </span>
-                  {editingIdx !== i && (
-                    <>
-                      <button
-                        onClick={() => startEdit(i)}
-                        className="ml-4 px-2 py-1 rounded bg-blue-100 text-blue-700 border border-blue-300 hover:bg-blue-200 hover:text-blue-900 transition-colors text-xs font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        title="Edit habit"
-                        type="button"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => setDeletingIdx(i)}
-                        className="ml-2 px-2 py-1 rounded bg-red-100 text-red-700 border border-red-300 hover:bg-red-200 hover:text-red-900 transition-colors text-xs font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-                        title="Delete habit"
-                        type="button"
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )}
-                </div>
-                {deletingIdx === i && (
-                  <div className="mt-2 mb-4 flex items-center bg-red-50 border border-red-200 rounded p-2">
-                    <span className="text-red-700 text-sm">
-                      Are you sure you want to delete this habit?
-                    </span>
-                    <div className="flex gap-2 ml-auto">
-                      <button
-                        onClick={() => deleteHabit(i)}
-                        className="px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600 text-xs font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-                        type="button"
-                      >
-                        Yes, delete
-                      </button>
-                      <button
-                        onClick={() => setDeletingIdx(null)}
-                        className="px-3 py-1 rounded bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 hover:text-gray-900 text-xs font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-                        type="button"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-                <div className="flex gap-2 mb-2">
-                  {daysOfWeek.map((day, j) => {
-                    const isToday = j === new Date().getDay();
-                    return (
-                      <label
-                        key={day}
-                        className={`flex flex-col items-center text-xs ${
-                          isToday ? "font-bold text-blue-700" : ""
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={habit.daysChecked[j]}
-                          onChange={() => toggleDay(i, j)}
-                          className={`accent-blue-500 w-5 h-5 mb-1 ${
-                            isToday ? "ring-2 ring-blue-400 ring-offset-2" : ""
-                          }`}
-                        />
-                        {day}
-                      </label>
-                    );
-                  })}
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className="progress-bar"
-                    style={{ width: `${percent}%` }}
-                  ></div>
-                </div>
-              </div>
+              <HabitCard
+                habit={habit}
+                i={i}
+                editingIdx={editingIdx}
+                editValue={editValue}
+                deletingIdx={deletingIdx}
+                daysOfWeek={daysOfWeek}
+                completed={completed}
+                percent={percent}
+                startEdit={startEdit}
+                setEditValue={setEditValue}
+                saveEdit={saveEdit}
+                setDeletingIdx={setDeletingIdx}
+                deleteHabit={deleteHabit}
+                toggleDay={toggleDay}
+              />
             );
           })
         )}
