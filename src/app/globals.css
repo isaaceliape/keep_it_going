@@ -1,26 +1,297 @@
-@import "tailwindcss";
-
+/* Global CSS for Keep It Going - no Tailwind/PostCSS */
+/* Dark mode is handled with a .dark class on <body> using standard CSS and JS */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #1d4ed8;
+  --gradient-light: linear-gradient(to bottom right, #e0f7fa, #f48fb1, #ffeb3b);
+  --gradient-dark: linear-gradient(to bottom right, #0a0a0a, #1a1a1a, #3a3a3a);
+  --blue-100: #dbeafe;
+  --blue-300: #93c5fd;
+  --blue-400: #60a5fa;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --green-100: #d1fae5;
+  --green-200: #a7f3d0;
+  --green-300: #6ee7b7;
+  --green-400: #34d399;
+  --green-700: #047857;
+  --purple-600: #8b5cf6;
+  --red-50: #fef2f2;
+  --red-100: #fee2e2;
+  --red-200: #fecaca;
+  --red-300: #fca5a5;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+  --white: #fff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --primary: #3b82f6;
   }
 }
 
-/* Add your global styles here */
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
+  background: var(--gradient-light);
+  color: #222;
+  min-height: 100vh;
+}
+body.dark {
+  background: var(--gradient-dark);
+  color: #ededed;
 }
 
 .progress-bar {
   transition: width 0.3s;
-  background-color: #3b82f6; /* Tailwind blue-500 */
-  height: 0.75rem; /* h-3 */
-  border-radius: 9999px; /* rounded-full */
+  background-color: var(--primary);
+  color: var(--white);
+  height: 0.75rem;
+  border-radius: 9999px;
+}
+
+.dark-mode-toggle {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  z-index: 1000;
+}
+
+.bg-light-background {
+  background: var(--white);
+}
+.bg-dark-background {
+  background: var(--gray-900);
+}
+.text-light-text {
+  color: var(--gray-800);
+}
+.text-dark-text {
+  color: var(--foreground);
+}
+.bg-light-primary {
+  background: var(--primary);
+  color: var(--white); /* Ensure white text for contrast */
+}
+.bg-dark-primary {
+  background: var(--primary);
+  color: var(--white); /* Ensure white text for contrast */
+}
+/* Alert backgrounds: ensure good contrast for text */
+.bg-blue-100 {
+  background: var(--blue-100);
+  color: var(--blue-700); /* dark blue text on light blue bg */
+}
+.bg-blue-700 {
+  background: var(--blue-700);
+  color: var(--white); /* white text on dark blue bg */
+}
+.bg-red-100 {
+  background: var(--red-100);
+  color: var(--red-600); /* dark red text on light red bg */
+}
+.bg-red-500 {
+  background: var(--red-500);
+  color: var(--white); /* white text on strong red bg */
+}
+.bg-gray-100 {
+  background: var(--gray-100);
+  color: var(--gray-900); /* dark text on light gray */
+}
+.bg-gray-900 {
+  background: var(--gray-900);
+  color: var(--white); /* white text on dark gray */
+}
+.rounded {
+  border-radius: 0.5rem;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.shadow {
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+}
+.shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.border {
+  border: 1px solid #e5e7eb;
+}
+.border-blue-300 {
+  border-color: var(--blue-300);
+}
+.border-green-300 {
+  border-color: var(--green-300);
+}
+.border-red-200 {
+  border-color: var(--red-200);
+}
+.border-red-300 {
+  border-color: var(--red-300);
+}
+.border-gray-300 {
+  border-color: var(--gray-300);
+}
+.p-4 {
+  padding: 1rem;
+}
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.ml-2 {
+  margin-left: 0.5rem;
+}
+.ml-4 {
+  margin-left: 1rem;
+}
+.mt-2 {
+  margin-top: 0.5rem;
+}
+.mt-4 {
+  margin-top: 1rem;
+}
+.flex {
+  display: flex;
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-1 {
+  flex: 1 1 0%;
+}
+.flex-grow {
+  flex-grow: 1;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.space-y-2 > * + * {
+  margin-top: 0.5rem;
+}
+.space-y-6 > * + * {
+  margin-top: 1.5rem;
+}
+.min-h-screen {
+  min-height: 100vh;
+}
+.max-w-xl {
+  max-width: 36rem;
+}
+.w-full {
+  width: 100%;
+}
+.w-48 {
+  width: 12rem;
+}
+.object-contain {
+  object-fit: contain;
+}
+.overflow-hidden {
+  overflow: hidden;
+}
+.font-bold {
+  font-weight: bold;
+}
+.font-semibold {
+  font-weight: 600;
+}
+.text-lg {
+  font-size: 1.125rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+}
+.text-center {
+  text-align: center;
+}
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+/* Add more utility classes as needed for your UI */
+
+input {
+  border: none;
+  outline: none;
+  /* Optionally, add a subtle box-shadow or background for focus if needed */
+}
+
+.logo-wrapper {
+  border-radius: 30px;
+  overflow: hidden;
+  width: 240px;
+  height: 180px;
+}
+.logo-img {
+  display: block;
+  width: 100%;
+  height: 100%;
 }

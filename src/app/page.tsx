@@ -130,16 +130,26 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 p-4">
+    <main className="flex flex-col items-center justify-center min-h-screen bg-gradient-light dark:bg-gradient-dark p-4">
       {/* Replace the h1 with the logo image using Next.js Image for optimization */}
-      <Image
-        src="/keep_it_going_logo.png"
-        alt="Keep it going logo"
-        width={120}
-        height={80}
-        className="mb-6 object-contain drop-shadow-lg rounded-[30px] overflow-hidden"
-        priority
-      />
+      <div
+        className="mb-6 drop-shadow-lg"
+        style={{
+          borderRadius: "30px",
+          overflow: "hidden",
+          width: 200,
+        }}
+      >
+        <Image
+          src="/keep_it_going_logo.png"
+          alt="Keep it going logo"
+          width={200}
+          height={150}
+          className="object-contain"
+          priority
+          style={{ display: "block", width: "100%", height: "100%" }}
+        />
+      </div>
       <div className="mb-6 flex items-center justify-center">
         <span className="bg-blue-100 text-blue-800 font-bold text-lg px-4 py-2 rounded-full shadow border border-blue-300">
           {(() => {
@@ -188,16 +198,18 @@ export default function Home() {
         />
         <button
           type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="bg-light-primary text-light-text px-4 py-2 rounded hover:bg-blue-600 dark:bg-dark-primary dark:text-dark-text border-0 focus:ring-2 focus:ring-blue-400"
         >
           Add
         </button>
       </form>
       <div className="w-full max-w-xl space-y-6">
         {loading ? (
-          <div className="text-gray-400 text-center">Loading habits...</div>
+          <div className="text-light-text text-center dark:text-dark-text">
+            Loading habits...
+          </div>
         ) : habits.length === 0 ? (
-          <div className="text-gray-400 text-center">
+          <div className="text-light-text text-center dark:text-dark-text">
             No habits yet. Add one above!
           </div>
         ) : (
@@ -205,7 +217,10 @@ export default function Home() {
             const completed = habit.daysChecked.filter(Boolean).length;
             const percent = Math.round((completed / 7) * 100);
             return (
-              <div key={habit.id || i} className="bg-white rounded shadow p-4">
+              <div
+                key={habit.id || i}
+                className="bg-light-background text-light-text rounded shadow p-4 dark:bg-dark-background dark:text-dark-text"
+              >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     {editingIdx === i ? (
@@ -217,7 +232,7 @@ export default function Home() {
                         className="flex items-center gap-2 w-full"
                       >
                         <input
-                          className="border rounded px-2 py-1 flex-1"
+                          className="border rounded px-2 py-1 flex-1 bg-light-background text-light-text dark:bg-dark-background dark:text-dark-text"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
                           autoFocus
@@ -229,14 +244,6 @@ export default function Home() {
                         >
                           Save
                         </button>
-                        <button
-                          type="button"
-                          onClick={cancelEdit}
-                          className="px-3 py-1 rounded bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 hover:text-gray-900 transition-colors text-xs font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-                          title="Cancel editing"
-                        >
-                          Cancel
-                        </button>
                       </form>
                     ) : (
                       <span className="font-semibold text-lg truncate">
@@ -244,7 +251,7 @@ export default function Home() {
                       </span>
                     )}
                   </div>
-                  <span className="text-sm text-gray-500 ml-4 whitespace-nowrap">
+                  <span className="text-sm text-light-text ml-4 whitespace-nowrap dark:text-dark-text">
                     {completed}/7 days
                     <span className="ml-2 text-xs text-purple-600 font-semibold">
                       Streak: {habit.streak} week
