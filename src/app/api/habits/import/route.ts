@@ -13,7 +13,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // @ts-ignore
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   const dbPath = path.resolve(process.cwd(), "habits.sqlite");

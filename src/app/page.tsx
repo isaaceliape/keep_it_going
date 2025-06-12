@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import HabitCard from "./HabitCard";
+import HamburgerMenu from "./HamburgerMenu";
 
 const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -22,7 +23,9 @@ export default function Home() {
   const [editValue, setEditValue] = useState("");
   const [deletingIdx, setDeletingIdx] = useState<number | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(
+    null
+  ) as React.RefObject<HTMLDivElement>;
 
   // Fetch habits from API
   useEffect(() => {
@@ -118,6 +121,21 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [menuOpen]);
 
+  // Extracted import handler
+  async function handleImportSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const input = document.getElementById("import-sqlite") as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const formData = new FormData();
+    formData.append("file", input.files[0]);
+    await fetch("/api/habits/import", {
+      method: "POST",
+      body: formData,
+    });
+    setMenuOpen(false);
+    window.location.reload();
+  }
+
   // Helper to get the start and end of the current week
   function getCurrentWeekRange() {
     const today = new Date();
@@ -131,6 +149,35 @@ export default function Home() {
     };
   }
   const weekRange = getCurrentWeekRange();
+
+  // Helper to get the week number and label for the current date
+  function getCurrentWeekLabel(date: Date) {
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    // Get the current date's week number within the month
+    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const pastDaysOfMonth = Math.floor(
+      (date.getTime() - firstDayOfMonth.getTime()) / 86400000
+    );
+    const weekNumber = Math.ceil(
+      (pastDaysOfMonth + firstDayOfMonth.getDay() + 1) / 7
+    );
+    return `Week ${weekNumber} of ${
+      monthNames[date.getMonth()]
+    } ${date.getFullYear()}`;
+  }
 
   if (loading) {
     return (
@@ -150,84 +197,12 @@ export default function Home() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen bg-gradient-light dark:bg-gradient-dark p-4">
       {/* Hamburger menu */}
-      <div className="fixed top-4 right-4 z-50">
-        <button
-          aria-label="Open menu"
-          className="p-2 rounded-full bg-white shadow hover:bg-gray-100 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          <svg
-            width="28"
-            height="28"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="black"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
-        </button>
-        {menuOpen && (
-          <div
-            ref={menuRef}
-            className="absolute right-0 mt-2 w-64 bg-white rounded shadow-lg border border-gray-200 p-4 flex flex-col gap-4 z-50"
-          >
-            <button
-              onClick={() => {
-                const link = document.createElement("a");
-                link.href = "/api/habits/export";
-                link.download = "habits.sqlite";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                setMenuOpen(false);
-              }}
-              className="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors shadow border-0 focus:ring-2 focus:ring-green-400 cursor-pointer"
-            >
-              Export data
-            </button>
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const input = document.getElementById(
-                  "import-sqlite"
-                ) as HTMLInputElement;
-                if (!input.files || input.files.length === 0) return;
-                const formData = new FormData();
-                formData.append("file", input.files[0]);
-                await fetch("/api/habits/import", {
-                  method: "POST",
-                  body: formData,
-                });
-                setMenuOpen(false);
-                window.location.reload();
-              }}
-              className="flex flex-row items-center gap-2"
-            >
-              <input
-                id="import-sqlite"
-                type="file"
-                accept=".sqlite"
-                className="block text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                required
-                title="Select a .sqlite file to import"
-                placeholder="Select a .sqlite file"
-              />
-              <button
-                type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors shadow border-0 focus:ring-2 focus:ring-blue-400 cursor-pointer"
-              >
-                Import data
-              </button>
-            </form>
-          </div>
-        )}
-      </div>
-      {/* Replace the h1 with the logo image using Next.js Image for optimization */}
+      <HamburgerMenu
+        menuOpen={menuOpen}
+        setMenuOpen={setMenuOpen}
+        menuRef={menuRef}
+        handleImportSubmit={handleImportSubmit}
+      />
       <div className="mb-6 drop-shadow-lg logo-container">
         <Image
           src="/keep_it_going_logo.png"
@@ -240,40 +215,7 @@ export default function Home() {
       </div>
       <div className="mb-6 flex items-center justify-center">
         <span className="bg-blue-100 text-blue-800 font-bold text-lg px-4 py-2 rounded-full shadow border border-blue-300">
-          {(() => {
-            const today = weekRange.currentDate;
-            const monthNames = [
-              "January",
-              "February",
-              "March",
-              "April",
-              "May",
-              "June",
-              "July",
-              "August",
-              "September",
-              "October",
-              "November",
-              "December",
-            ];
-
-            // Get the current date's week number within the month
-            const firstDayOfMonth = new Date(
-              today.getFullYear(),
-              today.getMonth(),
-              1
-            );
-            const pastDaysOfMonth = Math.floor(
-              (today.getTime() - firstDayOfMonth.getTime()) / 86400000
-            );
-            const weekNumber = Math.ceil(
-              (pastDaysOfMonth + firstDayOfMonth.getDay() + 1) / 7
-            );
-
-            return `Week ${weekNumber} of ${
-              monthNames[today.getMonth()]
-            } ${today.getFullYear()}`;
-          })()}
+          {getCurrentWeekLabel(weekRange.currentDate)}
         </span>
       </div>
       <form onSubmit={addHabit} className="flex gap-2 mb-6 w-full max-w-xl">

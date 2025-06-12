@@ -3,9 +3,33 @@ import { NextResponse } from "next/server";
 
 export async function PUT(req: Request) {
   const { id, daysChecked, name } = await req.json();
+  // Validate id
+  if (typeof id !== "number" || !Number.isInteger(id) || id < 1) {
+    return NextResponse.json({ error: "Invalid habit id." }, { status: 400 });
+  }
+  // Validate daysChecked
+  if (
+    !Array.isArray(daysChecked) ||
+    daysChecked.length !== 7 ||
+    !daysChecked.every((d) => typeof d === "boolean")
+  ) {
+    return NextResponse.json(
+      { error: "Invalid daysChecked array." },
+      { status: 400 }
+    );
+  }
+  // Validate name if present
+  let safeName = undefined;
   if (typeof name === "string") {
+    if (!name.trim() || name.length > 100) {
+      return NextResponse.json(
+        { error: "Invalid habit name." },
+        { status: 400 }
+      );
+    }
+    safeName = name.trim();
     db.prepare("UPDATE habits SET name = ?, daysChecked = ? WHERE id = ?").run(
-      name,
+      safeName,
       JSON.stringify(daysChecked),
       id
     );
