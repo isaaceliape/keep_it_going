@@ -1,4 +1,4 @@
-import db from "../../../db";
+import db from "../../../../db";
 import { NextResponse } from "next/server";
 
 export async function PUT(req: Request) {
@@ -28,34 +28,39 @@ export async function PUT(req: Request) {
       );
     }
     safeName = name.trim();
-    db.prepare("UPDATE habits SET name = ?, daysChecked = ? WHERE id = ?").run(
+    await db.query("UPDATE habits SET name = ?, daysChecked = ? WHERE id = ?", [
       safeName,
       JSON.stringify(daysChecked),
-      id
-    );
+      id,
+    ]);
   } else {
-    db.prepare("UPDATE habits SET daysChecked = ? WHERE id = ?").run(
+    await db.query("UPDATE habits SET daysChecked = ? WHERE id = ?", [
       JSON.stringify(daysChecked),
-      id
-    );
+      id,
+    ]);
   }
   // Check the days and manage streak
   if (Array.isArray(daysChecked) && daysChecked.length === 7) {
     // Reset streak if any day is unchecked (meaning they missed a day)
     if (daysChecked.includes(false)) {
       // Reset streak to 0 if any day is missed
-      db.prepare("UPDATE habits SET streak = 0 WHERE id = ?").run(id);
+      await db.query("UPDATE habits SET streak = 0 WHERE id = ?", [id]);
     } else {
       // Increment streak only if all days are checked
-      db.prepare("UPDATE habits SET streak = streak + 1 WHERE id = ?").run(id);
+      await db.query("UPDATE habits SET streak = streak + 1 WHERE id = ?", [
+        id,
+      ]);
     }
   }
-  const habit = db.prepare("SELECT * FROM habits WHERE id = ?").get(id) as {
-    id: number;
-    name: string;
-    daysChecked: string;
-    streak: number;
-  };
+  const [habitRows] = await db.query("SELECT * FROM habits WHERE id = ?", [id]);
+  const habit = (
+    habitRows as {
+      id: number;
+      name: string;
+      daysChecked: string;
+      streak: number;
+    }[]
+  )[0];
   return NextResponse.json({
     id: habit.id,
     name: habit.name,

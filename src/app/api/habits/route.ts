@@ -1,4 +1,4 @@
-import db from "../../db";
+import db from "../../../db";
 import { NextResponse } from "next/server";
 import type { HabitRow } from "./habits.types";
 
@@ -13,7 +13,8 @@ function parseHabit(habit: HabitRow) {
 
 // GET /api/habits
 export async function GET() {
-  const habits = db.prepare("SELECT * FROM habits").all() as HabitRow[];
+  const [rows] = await db.query("SELECT * FROM habits");
+  const habits = rows as HabitRow[];
   const parsed = habits.map(parseHabit);
   return NextResponse.json(parsed);
 }
@@ -27,12 +28,14 @@ export async function POST(req: Request) {
   }
   const safeName = name.trim();
   const daysChecked = JSON.stringify(Array(7).fill(false));
-  const stmt = db.prepare(
-    "INSERT INTO habits (name, daysChecked, streak) VALUES (?, ?, 0)"
+  const [result] = await db.query(
+    "INSERT INTO habits (name, daysChecked, streak) VALUES (?, ?, 0)",
+    [safeName, daysChecked]
   );
-  const info = stmt.run(safeName, daysChecked);
-  const habit = db
-    .prepare("SELECT * FROM habits WHERE id = ?")
-    .get(info.lastInsertRowid) as HabitRow;
+  const insertId = (result as { insertId: number }).insertId;
+  const [habitRows] = await db.query("SELECT * FROM habits WHERE id = ?", [
+    insertId,
+  ]);
+  const habit = (habitRows as HabitRow[])[0];
   return NextResponse.json(parseHabit(habit));
 }

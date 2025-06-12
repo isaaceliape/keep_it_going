@@ -7,6 +7,6 @@ export async function DELETE(req: Request) {
   if (typeof id !== "number" || !Number.isInteger(id) || id < 1) {
     return NextResponse.json({ error: "Invalid habit id." }, { status: 400 });
   }
-  db.prepare("DELETE FROM habits WHERE id = ?").run(id);
+  await db.query("DELETE FROM habits WHERE id = ?", [id]);
   return NextResponse.json({ success: true });
 }
