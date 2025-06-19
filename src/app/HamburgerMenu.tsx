@@ -7,6 +7,18 @@ interface HamburgerMenuProps {
   handleImportSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
 }
 
+function handleExport(
+  setMenuOpen: React.Dispatch<React.SetStateAction<boolean>>
+) {
+  const link = document.createElement("a");
+  link.href = "/api/habits/export";
+  link.download = "habits.sqlite";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setMenuOpen(false);
+}
+
 const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   menuOpen,
   setMenuOpen,
@@ -40,20 +52,13 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         className="absolute right-0 mt-2 w-64 bg-white rounded shadow-lg border border-gray-200 p-4 flex flex-col gap-4 z-50"
       >
         <button
-          onClick={() => {
-            const link = document.createElement("a");
-            link.href = "/api/habits/export";
-            link.download = "habits.sqlite";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            setMenuOpen(false);
-          }}
+          onClick={() => handleExport(setMenuOpen)}
           className="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors shadow border-0 focus:ring-2 focus:ring-green-400 cursor-pointer"
         >
           Export data
         </button>
         <form
+          data-testid="import-form"
           onSubmit={handleImportSubmit}
           className="flex flex-col items-start gap-2"
         >

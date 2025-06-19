@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import HabitCard from "./HabitCard";
 import HamburgerMenu from "./HamburgerMenu";
-
-const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+import { getCurrentWeekRange, getCurrentWeekLabel } from "./utils";
+import { daysOfWeek } from "./constants";
 
 // Define Habit type
 interface Habit {
@@ -106,20 +106,20 @@ export default function Home() {
     setEditValue("");
   };
 
-  // Close menu on outside click
-  useEffect(() => {
-    function handleClick(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    if (menuOpen) {
-      document.addEventListener("mousedown", handleClick);
-    } else {
-      document.removeEventListener("mousedown", handleClick);
-    }
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [menuOpen]);
+  // Close menu on outside click (disable this to allow toggle only by button)
+  // useEffect(() => {
+  //   function handleClick(event: MouseEvent) {
+  //     if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+  //       setMenuOpen(false);
+  //     }
+  //   }
+  //   if (menuOpen) {
+  //     document.addEventListener("mousedown", handleClick);
+  //   } else {
+  //     document.removeEventListener("mousedown", handleClick);
+  //   }
+  //   return () => document.removeEventListener("mousedown", handleClick);
+  // }, [menuOpen]);
 
   // Extracted import handler
   async function handleImportSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -136,59 +136,14 @@ export default function Home() {
     window.location.reload();
   }
 
-  // Helper to get the start and end of the current week
-  function getCurrentWeekRange() {
-    const today = new Date();
-    const first = today.getDate() - today.getDay(); // First day (Sunday) of current week
-    const start = new Date(today.getFullYear(), today.getMonth(), first);
-    const end = new Date(today.getFullYear(), today.getMonth(), first + 6);
-    return {
-      start: start.toLocaleDateString(),
-      end: end.toLocaleDateString(),
-      currentDate: today,
-    };
-  }
   const weekRange = getCurrentWeekRange();
-
-  // Helper to get the week number and label for the current date
-  function getCurrentWeekLabel(date: Date) {
-    const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    // Get the current date's week number within the month
-    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-    const pastDaysOfMonth = Math.floor(
-      (date.getTime() - firstDayOfMonth.getTime()) / 86400000
-    );
-    const weekNumber = Math.ceil(
-      (pastDaysOfMonth + firstDayOfMonth.getDay() + 1) / 7
-    );
-    return `Week ${weekNumber} of ${
-      monthNames[date.getMonth()]
-    } ${date.getFullYear()}`;
-  }
 
   if (loading) {
     return (
       <main className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-300 rounded-full w-48 mb-4"></div>
-          <div className="space-y-2">
-            <div className="h-4 bg-gray-300 rounded-full w-full"></div>
-            <div className="h-4 bg-gray-300 rounded-full w-full"></div>
-            <div className="h-4 bg-gray-300 rounded-full w-full"></div>
-          </div>
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div className="text-blue-700 font-semibold">Loading...</div>
         </div>
       </main>
     );
@@ -196,7 +151,6 @@ export default function Home() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen bg-gradient-light dark:bg-gradient-dark p-4">
-      {/* Hamburger menu */}
       <HamburgerMenu
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
