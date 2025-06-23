@@ -18,10 +18,12 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        registry-url: 'https://registry.npmjs.org'
     
     - name: Install dependencies
-      run: npm ci --registry=https://registry.npmjs.org/
+      run: |
+        npm config set @isaaceliape:registry https://registry.npmjs.org/
+        npm config set //registry.npmjs.org/:_authToken=
+        npm ci
       
     - name: Run lint
       run: npm run lint
