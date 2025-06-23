@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import HabitCard from "./HabitCard";
 import HamburgerMenu from "./HamburgerMenu";
@@ -15,135 +15,269 @@ interface Habit {
   streak: number;
 }
 
+/**
+ * Home component - Main page of the habit tracking application
+ * Manages the state of habits, UI interactions, and API calls
+ */
 export default function Home() {
-  const [habits, setHabits] = useState<Habit[]>([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [editingIdx, setEditingIdx] = useState<number | null>(null);
-  const [editValue, setEditValue] = useState("");
-  const [deletingIdx, setDeletingIdx] = useState<number | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
+  // State for habits and related operations
+  const [habits, setHabits] = useState<Habit[]>(() => []);
+  const [input, setInput] = useState(() => ""); // New habit input
+  
+  // UI state management
+  const [loading, setLoading] = useState(() => true); // Initial loading state
+  const [error, setError] = useState<string | null>(() => null); // Error messages
+  const [actionInProgress, setActionInProgress] = useState<string | null>(() => null); // Tracks ongoing API calls
+  
+  // Edit mode state
+  const [editingIdx, setEditingIdx] = useState<number | null>(() => null); // Currently editing habit index
+  const [editValue, setEditValue] = useState(() => ""); // Edit input value
+  
+  // Delete confirmation state
+  const [deletingIdx, setDeletingIdx] = useState<number | null>(() => null);
+  
+  // Menu state
+  const [menuOpen, setMenuOpen] = useState(() => false);
   const menuRef = useRef<HTMLDivElement>(
-    null
+    null,
   ) as React.RefObject<HTMLDivElement>;
 
-  // Fetch habits from API
+  /**
+   * Fetch all habits from the API on component mount
+   * Sets loading and error states appropriately during the process
+   */
   useEffect(() => {
     async function fetchHabits() {
-      setLoading(true);
-      const res = await fetch("/api/habits");
-      const data = await res.json();
-      setHabits(data);
-      setLoading(false);
+      try {
+        setLoading(true); // Start loading
+        setError(null);   // Clear any previous errors
+        
+        const res = await fetch("/api/habits");
+        if (!res.ok) {
+          throw new Error(`Failed to fetch habits: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        setHabits(data);  // Update habits with fetched data
+      } catch (error) {
+        console.error("Error fetching habits:", error);
+        setError(error instanceof Error ? error.message : "Failed to load habits");
+      } finally {
+        setLoading(false); // End loading state regardless of outcome
+      }
     }
     fetchHabits();
-  }, []);
+  }, []); // Empty dependency array ensures this runs once on mount
 
-  const addHabit = async (e: React.FormEvent<HTMLFormElement>) => {
+  /**
+   * Adds a new habit via API call
+   * Handles form submission, validation, API request, and state updates
+   * 
+   * @param e - Form submission event 
+   */
+  const addHabit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!input.trim()) return;
-    const res = await fetch("/api/habits", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: input.trim() }),
-    });
-    const newHabit = await res.json();
-    setHabits((prev) => [...prev, newHabit]);
-    setInput("");
-  };
+    if (!input.trim()) return; // Prevent adding empty habits
+    
+    try {
+      setActionInProgress("adding"); // Show loading indicator
+      setError(null); // Clear any previous errors
+      
+      const res = await fetch("/api/habits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: input.trim() }),
+      });
+      
+      if (!res.ok) {
+        throw new Error(`Failed to add habit: ${res.status}`);
+      }
+      
+      const newHabit = await res.json();
+      setHabits((prev) => [...prev, newHabit]); // Add new habit to state
+      setInput(""); // Reset input field
+    } catch (error) {
+      console.error("Error adding habit:", error);
+      setError(error instanceof Error ? error.message : "Failed to add habit");
+    } finally {
+      setActionInProgress(null); // Remove loading indicator
+    }
+  }, [input]); // Re-create function when input changes
 
-  const toggleDay = async (habitIdx: number, dayIdx: number) => {
+  /**
+   * Toggles the completion status of a specific day for a habit
+   * Performs optimistic UI update and sends API request to persist the change
+   * 
+   * @param habitIdx - Index of the habit in the habits array
+   * @param dayIdx - Index of the day to toggle (0-6 for Sunday-Saturday)
+   */
+  const toggleDay = useCallback(async (habitIdx: number, dayIdx: number) => {
     const habit = habits[habitIdx];
+    // Create updated days array with the toggled day
     const updatedDays = habit.daysChecked.map((checked, j) =>
-      j === dayIdx ? !checked : checked
+      j === dayIdx ? !checked : checked,
     );
-    const res = await fetch("/api/habits/update", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: habit.id, daysChecked: updatedDays }),
-    });
-    const updatedHabit = await res.json();
-    setHabits((prev) =>
-      prev.map((h, i) => (i === habitIdx ? updatedHabit : h))
+    
+    // Store original days for potential rollback
+    const originalDays = [...habit.daysChecked];
+    
+    // Apply optimistic update
+    setHabits((prev) => 
+      prev.map((h, i) => i === habitIdx 
+        ? { ...h, daysChecked: updatedDays } 
+        : h
+      )
     );
-  };
+    
+    try {
+      const res = await fetch("/api/habits/update", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: habit.id, daysChecked: updatedDays }),
+      });
+      
+      if (!res.ok) {
+        throw new Error(`Failed to update habit: ${res.status}`);
+      }
+      
+      const updatedHabit = await res.json();
+      // Update with server response (includes updated streak)
+      setHabits((prev) =>
+        prev.map((h, i) => (i === habitIdx ? updatedHabit : h)),
+      );
+    } catch (error) {
+      console.error("Error toggling day:", error);
+      // Rollback optimistic update on error
+      setHabits((prev) =>
+        prev.map((h, i) => i === habitIdx 
+          ? { ...h, daysChecked: originalDays } 
+          : h
+        )
+      );
+      setError("Failed to update habit. Please try again.");
+    }
+  }, [habits]);
 
-  const startEdit = (idx: number) => {
+  const startEdit = useCallback((idx: number) => {
     setEditingIdx(idx);
     setEditValue(habits[idx].name);
-  };
+  }, [habits]);
 
-  const saveEdit = async (idx: number) => {
+  const saveEdit = useCallback(async (idx: number) => {
     const habit = habits[idx];
-    const res = await fetch("/api/habits/update", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: habit.id,
-        name: editValue,
-        daysChecked: habit.daysChecked,
-      }),
-    });
-    const updatedHabit = await res.json();
-    setHabits((prev) => prev.map((h, i) => (i === idx ? updatedHabit : h)));
+    try {
+      const res = await fetch("/api/habits/update", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: habit.id,
+          name: editValue,
+          daysChecked: habit.daysChecked,
+        }),
+      });
+      
+      if (!res.ok) {
+        throw new Error(`Failed to update habit: ${res.status}`);
+      }
+      
+      const updatedHabit = await res.json();
+      setHabits((prev) => prev.map((h, i) => (i === idx ? updatedHabit : h)));
+      setEditingIdx(null);
+      setEditValue("");
+    } catch (error) {
+      console.error("Error saving edit:", error);
+      // Could display an error message to the user
+    }
+  }, [habits, editValue]);
+
+  const deleteHabit = useCallback(async (idx: number) => {
+    const habit = habits[idx];
+    try {
+      const res = await fetch("/api/habits/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: habit.id }),
+      });
+      
+      if (!res.ok) {
+        throw new Error(`Failed to delete habit: ${res.status}`);
+      }
+      
+      setHabits((prev) => prev.filter((_, i) => i !== idx));
+      setDeletingIdx(null);
+    } catch (error) {
+      console.error("Error deleting habit:", error);
+      // Could show an error notification to the user
+    }
+  }, [habits]);
+
+  const cancelEdit = useCallback(() => {
     setEditingIdx(null);
     setEditValue("");
-  };
-
-  const deleteHabit = async (idx: number) => {
-    const habit = habits[idx];
-    await fetch("/api/habits/delete", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: habit.id }),
-    });
-    setHabits((prev) => prev.filter((_, i) => i !== idx));
-    setDeletingIdx(null);
-  };
-
-  const cancelEdit = () => {
-    setEditingIdx(null);
-    setEditValue("");
-  };
-
-  // Close menu on outside click (disable this to allow toggle only by button)
-  // useEffect(() => {
-  //   function handleClick(event: MouseEvent) {
-  //     if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-  //       setMenuOpen(false);
-  //     }
-  //   }
-  //   if (menuOpen) {
-  //     document.addEventListener("mousedown", handleClick);
-  //   } else {
-  //     document.removeEventListener("mousedown", handleClick);
-  //   }
-  //   return () => document.removeEventListener("mousedown", handleClick);
-  // }, [menuOpen]);
+  }, []);
 
   // Extracted import handler
-  async function handleImportSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const handleImportSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const input = document.getElementById("import-sqlite") as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
-    const formData = new FormData();
-    formData.append("file", input.files[0]);
-    await fetch("/api/habits/import", {
-      method: "POST",
-      body: formData,
-    });
-    setMenuOpen(false);
-    window.location.reload();
-  }
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", input.files[0]);
+      const res = await fetch("/api/habits/import", {
+        method: "POST",
+        body: formData,
+      });
+      
+      if (!res.ok) {
+        throw new Error(`Failed to import habits: ${res.status}`);
+      }
+      
+      setMenuOpen(false);
+      window.location.reload();
+    } catch (error) {
+      console.error("Error importing habits:", error);
+      // Could display an import error message
+      // Could also add a more graceful recovery than forcing reload
+    }
+  }, []);
 
-  const weekRange = getCurrentWeekRange();
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  }, []);
+  
+  // Memoize weekRange calculation
+const weekRange = useMemo(() => getCurrentWeekRange(), []);
+  
+// Memoize week label to avoid recalculation on re-renders
+const weekLabel = useMemo(() => getCurrentWeekLabel(weekRange.currentDate), [weekRange.currentDate]);
 
+  // Show full-screen loading state only when initially loading
   if (loading) {
     return (
       <main className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
         <div className="flex flex-col items-center">
           <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <div className="text-blue-700 font-semibold">Loading...</div>
+          <div className="text-blue-700 font-semibold">Loading habits...</div>
+        </div>
+      </main>
+    );
+  }
+  
+  // Show error state if we have an error and no habits
+  if (error && habits.length === 0) {
+    return (
+      <main className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+        <div className="flex flex-col items-center">
+          <div className="text-red-600 font-semibold mb-2">Error</div>
+          <div className="text-red-500">{error}</div>
+          <button 
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </button>
         </div>
       </main>
     );
@@ -169,7 +303,7 @@ export default function Home() {
       </div>
       <div className="mb-6 flex items-center justify-center">
         <span className="bg-blue-100 text-blue-800 font-bold text-lg px-4 py-2 rounded-full shadow border border-blue-300">
-          {getCurrentWeekLabel(weekRange.currentDate)}
+          {weekLabel}
         </span>
       </div>
       <form onSubmit={addHabit} className="flex gap-2 mb-6 w-full max-w-xl">
@@ -178,28 +312,51 @@ export default function Home() {
           type="text"
           placeholder="Add a new habit..."
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={handleInputChange}
         />
         <button
           type="submit"
-          className="bg-light-primary text-light-text px-4 py-2 rounded hover:bg-blue-600 dark:bg-dark-primary dark:text-dark-text border-0 focus:ring-2 focus:ring-blue-400 cursor-pointer"
+          disabled={actionInProgress === "adding"}
+          className={`bg-light-primary text-light-text px-4 py-2 rounded hover:bg-blue-600 dark:bg-dark-primary dark:text-dark-text border-0 focus:ring-2 focus:ring-blue-400 ${
+            actionInProgress === "adding" ? "opacity-70 cursor-not-allowed" : "cursor-pointer"
+          }`}
         >
-          Add
+          {actionInProgress === "adding" ? (
+            <>
+              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+              Adding...
+            </>
+          ) : "Add"}
         </button>
       </form>
+      
+      {/* Display error message if any */}
+      {error && (
+        <div className="w-full max-w-xl mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
+          <span className="block sm:inline">{error}</span>
+          <button 
+            className="absolute top-0 bottom-0 right-0 px-4 py-3"
+            onClick={() => setError(null)}
+          >
+            <span className="sr-only">Dismiss</span>
+            <span className="text-2xl">&times;</span>
+          </button>
+        </div>
+      )}
+      
       <div className="w-full max-w-xl space-y-6">
-        {loading ? (
-          <div className="text-light-text text-center dark:text-dark-text">
-            Loading habits...
-          </div>
-        ) : habits.length === 0 ? (
+        {habits.length === 0 ? (
           <div className="text-light-text text-center dark:text-dark-text">
             No habits yet. Add one above!
           </div>
         ) : (
           habits.map((habit, i) => {
-            const completed = habit.daysChecked.filter(Boolean).length;
-            const percent = Math.round((completed / 7) * 100);
+            // Calculate these values once per habit with useMemo
+            const [completed, percent] = useMemo(() => {
+              const completedDays = habit.daysChecked.filter(Boolean).length;
+              const percentage = Math.round((completedDays / 7) * 100);
+              return [completedDays, percentage];
+            }, [habit.daysChecked]);
             return (
               <HabitCard
                 key={habit.id || i}
