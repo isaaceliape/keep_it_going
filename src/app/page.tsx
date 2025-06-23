@@ -351,12 +351,9 @@ const weekLabel = useMemo(() => getCurrentWeekLabel(weekRange.currentDate), [wee
           </div>
         ) : (
           habits.map((habit, i) => {
-            // Calculate these values once per habit with useMemo
-            const [completed, percent] = useMemo(() => {
-              const completedDays = habit.daysChecked.filter(Boolean).length;
-              const percentage = Math.round((completedDays / 7) * 100);
-              return [completedDays, percentage];
-            }, [habit.daysChecked]);
+            // Calculate these values directly instead of using useMemo in a loop
+            const completedDays = habit.daysChecked.filter(Boolean).length;
+            const percent = Math.round((completedDays / 7) * 100);
             return (
               <HabitCard
                 key={habit.id || i}
@@ -366,7 +363,7 @@ const weekLabel = useMemo(() => getCurrentWeekLabel(weekRange.currentDate), [wee
                 editValue={editValue}
                 deletingIdx={deletingIdx}
                 daysOfWeek={daysOfWeek}
-                completed={completed}
+                completed={completedDays}
                 percent={percent}
                 startEdit={startEdit}
                 setEditValue={setEditValue}
